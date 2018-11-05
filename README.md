@@ -1,1 +1,1 @@
-# nexpie-mqtt-library
+# nexpie-mqtt-client
