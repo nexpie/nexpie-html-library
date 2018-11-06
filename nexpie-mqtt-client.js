@@ -2184,24 +2184,84 @@ Nexgear.create = function(param) {
 
 	_nexgear.prototype = new EventEmitter;
 
-	_nexgear.prototype.connect = function(){
-		var mqttclientid = self.client_id;
+  function connectBroker(callback,emit){
+    var mqttclientid = self.client_id;
 		var mqttusername = self.username;
 		var mqttpassword = "";
+    let response = {};
 		var option = {
 			userName: mqttusername,
 			password: mqttpassword,
-			onSuccess: connect_success,
-			onFailure: connect_failure,
-
+			onSuccess: function(){
+        response.error=false;
+        response.msg="connected";
+        if(emit==true) self.emit("connected",response);
+        if(typeof(callback=='function'))return callback(response);
+      },
+			onFailure: function(err){
+        response.error=true;
+        response.msg=err.errorMessage;
+        if(emit==true) self.emit("connectFailure",response);
+        if(typeof(callback=='function'))return callback(response);
+      },
 		}
-		self.client = new Paho.MQTT.Client(BROKERHOST, Number(BROKERPORT), mqttclientid);
+    self.client = new Paho.MQTT.Client(BROKERHOST, Number(BROKERPORT), mqttclientid);
     self.client.onConnectionLost = _onConnectionLost;
     self.client.onMessageArrived = _onMessageArrived;
     self.client.onMessageDelivered = _onMessageDelivered;
     self.client.onError = _onError;
-		self.client.connect(option);
-	}
+    self.client.connect(option);
+  }
+
+	_nexgear.prototype.connect = function(){
+    if(self.client && self.client.isConnected()){
+      console.log('nexgear is already connected');
+      return;
+    }
+    else {
+      connectBroker(function(res){
+        // console.log(res);
+      },true);
+    }
+
+	};
+
+  _nexgear.prototype.disconnect = function() {
+    if(self.client && self.client.isConnected()){
+      self.client.disconnect();
+    }
+    else {
+      console.log('nexgear is already disconnected');
+      return;
+    }
+
+	};
+  _nexgear.prototype.reconnect = function(interval){
+    let response={};
+    response.error=true;
+    response.msg=`'${interval}' is invalid type of interval`;
+
+    if(typeof(interval)!='number') self.emit('reconnect',response);
+
+    if(self.client && self.client.isConnected()){
+      console.log('nexgear is already connected');
+      return;
+    }
+    else {
+      var recon = setInterval(function () {
+        connectBroker(function(res){
+          console.log('error ======debug======= '+res.error);
+          self.emit('reconnect',res);
+          if(res.error===false){
+            return clearInterval(recon);
+          }
+          console.log('------debug-------')
+        },false);
+      },interval);
+
+    }
+  };
+
   _nexgear.prototype.subscribe = function(topic,callback){
     let response={};
     var option={
@@ -2223,7 +2283,7 @@ Nexgear.create = function(param) {
       response.msg=`can not subscribe '${topic}', nexgear is disconnected`;
 		}
     if(typeof(callback=='function')) return callback(response);
-  }
+  };
 
   _nexgear.prototype.unsubscribe = function(topic,callback){
     let response={};
@@ -2246,7 +2306,7 @@ Nexgear.create = function(param) {
       response.msg=`can not unsubscribe '${topic}', nexgear is disconnected`;
     }
     if(typeof(callback=='function')) return callback(response);
-  }
+  };
 
   _nexgear.prototype.publish = function(topic,message,retained,callback){
     let response={};
@@ -2270,24 +2330,25 @@ Nexgear.create = function(param) {
       response.msg=`can not publish message, nexgear is disconnected`
 		}
       if(typeof(callback=='function')) return callback(response);
-  }
+  };
+
+  _nexgear.prototype.connected = function() {
+		if (self.client) {
+			return self.client.isConnected();
+		}
+		else return false;
+	};
 
   function connect_success(){
-    let response = {};
-    response.error=false;
-    response.msg="connected";
-    self.emit("connected",response);
+
   }
 
-  function connect_failure(err){ //when first nexgear failed
-    let response = {};
-    response.error=true;
-    response.msg=err.errorMessage;
-    self.emit("connect_failure",response);
+  function connect_failure(){ //when first nexgear failed
+
   }
 
   function _onConnectionLost(err){ //when nexgear disconnected
-    self.emit("disconnected",err);
+    self.emit("connectionLost",err);
   }
 
   function _onMessageArrived(res){ //when received message
