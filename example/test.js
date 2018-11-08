@@ -1,6 +1,5 @@
 var client_id="Er0aw7oqY6-farmcp2";
 var username="yg4s6S7GDg2EgrTXMh5C3zN1ETGpMMVP";
-//testgit ignore
 var nexgear = new Nexgear.create({client_id,username});
 
 function connect(){
