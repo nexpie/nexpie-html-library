@@ -2195,7 +2195,7 @@ Nexgear.create = function(param) {
 			onSuccess: function(){
         response.error=false;
         response.msg="connected";
-        if(emit==true) self.emit("connected",response);
+        if(emit==true) self.emit("connect",response);
         if(typeof(callback=='function'))return callback(response);
       },
 			onFailure: function(err){
@@ -2241,7 +2241,7 @@ Nexgear.create = function(param) {
     response.error=true;
     response.msg=`'${interval}' is invalid type of interval`;
 
-    if(typeof(interval)!='number') self.emit('reconnect',response);
+    if(typeof(interval)!='number') return self.emit('reconnect',response);
 
     if(self.client && self.client.isConnected()){
       console.log('nexgear is already connected');
@@ -2250,12 +2250,10 @@ Nexgear.create = function(param) {
     else {
       var recon = setInterval(function () {
         connectBroker(function(res){
-          console.log('error ======debug======= '+res.error);
           self.emit('reconnect',res);
-          if(res.error===false){
-            return clearInterval(recon);
+          if(res.error==false){
+            clearInterval(recon);
           }
-          console.log('------debug-------')
         },false);
       },interval);
 
@@ -2332,20 +2330,12 @@ Nexgear.create = function(param) {
       if(typeof(callback=='function')) return callback(response);
   };
 
-  _nexgear.prototype.connected = function() {
+  _nexgear.prototype.isconnected = function() {
 		if (self.client) {
 			return self.client.isConnected();
 		}
 		else return false;
 	};
-
-  function connect_success(){
-
-  }
-
-  function connect_failure(){ //when first nexgear failed
-
-  }
 
   function _onConnectionLost(err){ //when nexgear disconnected
     self.emit("connectionLost",err);
