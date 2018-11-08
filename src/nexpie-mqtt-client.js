@@ -2236,6 +2236,7 @@ Nexgear.create = function(param) {
     }
 
 	};
+  
   _nexgear.prototype.reconnect = function(interval){
     let response={};
     response.error=true;
