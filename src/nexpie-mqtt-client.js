@@ -8,8 +8,8 @@
  *       https://github.com/benjreinhart/node-event-emitter
  *
  *******************************************************************************/
-var BROKERHOST = 'tb7.nexpie.io';
-var BROKERPORT = '32233';
+var BROKERHOST = 'iot.eclipse.org';
+var BROKERPORT = 1883;
 /*******************************************************************************
  * Copyright (c) 2013 IBM Corp.
  *
